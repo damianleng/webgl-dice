@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<style type="text/css">
+    canvas { background: blue; }
+</style>
+
+<button id="xButton">x-Axis</button>
+<button id="yButton">y-Axis</button>
+<button id="zButton">z-Axis</button>
+<button id="toggleButton">Toggle Spin</button>
+<button id="increaseButton">Increase Theta</button>
+<button id="decreaseButton">Decrease Theta</button>
+
+<button id = "Roll">Roll the Dice</button>
+<script id="vertex-shader" type="x-shader/x-vertex">
+#version 300 es
+
+in vec4 aPosition;
+in vec2 aTexCoord;
+in vec3 aNormal;
+out vec4 vColor;
+
+out vec2 vTexCoord;
+
+uniform vec3 uTheta;
+uniform vec4 uAmbientProduct, uDiffuseProduct, uSpecularProduct;
+uniform vec4 uLightPosition;
+uniform float uShininess;
+uniform mat4 uModelViewMatrix;
+uniform mat4 uProjectionMatrix;
+uniform mat4 uModelMatrix;
+uniform mat4 uProjectMatrix;
+
+
+void main()
+{
+     vec3 pos = -(uModelViewMatrix * aPosition).xyz;
+
+    //fixed light postion
+
+    vec3 light = uLightPosition.xyz;
+    vec3 L = normalize(light - pos);
+
+
+    vec3 E = normalize(-pos);
+    vec3 H = normalize(L + E);
+
+    vec4 NN = vec4(aNormal,0);
+
+    // Transform vertex normal into eye coordinates
+
+    vec3 N = normalize((uModelViewMatrix*NN).xyz);
+
+    // Compute terms in the illumination equation
+    vec4 ambient = uAmbientProduct;
+
+    float Kd = max(dot(L, N), 0.0);
+    vec4  diffuse = Kd*uDiffuseProduct;
+
+    float Ks = pow( max(dot(N, H), 0.0), uShininess );
+    vec4  specular = Ks * uSpecularProduct;
+
+    if( dot(L, N) < 0.0 ) {
+	  specular = vec4(0.0, 0.0, 0.0, 1.0);
+    }
+
+    vTexCoord = aTexCoord;
+    //gl_Position = rz * ry * rx * aPosition;
+    gl_Position = uProjectionMatrix * uModelViewMatrix * aPosition;
+    gl_Position.z = -gl_Position.z;
+    vColor = ambient + diffuse + specular;
+    vColor.a = 1.0;
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+#version 300 es
+
+precision mediump float;
+
+in vec2 vTexCoord;
+
+in vec4 vColor;
+out vec4 fColor;
+
+uniform sampler2D uTextureMap;
+
+void
+main()
+{
+    fColor = vColor * texture(uTextureMap, vTexCoord);
+    //fColor = texture(uTextureMap, vTexCoord);
+}
+</script>
+
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MVnew.js"></script>
+<script type="text/javascript" src="Leng.js"></script>
+
+
+<body>
+<canvas id="gl-canvas" width="1024" height="1024">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+<img id = "texImage1" src = "images/dice1.jpg" hidden></img>
+<img id = "texImage2" src = "images/dice2.jpg" hidden></img>
+<img id = "texImage3" src = "images/dice3.jpg" hidden></img>
+<img id = "texImage4" src = "images/dice4.jpg" hidden></img>
+<img id = "texImage5" src = "images/dice5.jpg" hidden></img>
+<img id = "texImage6" src = "images/dice6.jpg" hidden></img>
+</body>
+</html>
